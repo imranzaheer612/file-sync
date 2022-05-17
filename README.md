@@ -1,6 +1,9 @@
 
 we are working on a file-sync system
 
-start server --> will listen for the clients
+start server.py --> will listen for the clients
 
-start client --> will connect to the server,  then enter command "sync new"
+start client (program.py)--> will connect to the server,  then enter command "sync new"
+
+
+sync imp pending
