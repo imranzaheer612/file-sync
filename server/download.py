@@ -1,7 +1,7 @@
 import os
-from socket import socket
 
-class Sync():
+
+class DownloadDir():
     
     def __init__(self, client):
         self.client = client

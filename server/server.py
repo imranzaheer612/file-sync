@@ -1,4 +1,4 @@
-from syncClient import Sync
+from download import DownloadDir
 import socket
 import threading
 
@@ -6,6 +6,12 @@ import threading
 connections = []
 total_connections = 0
 
+
+##
+# save registered clients in a json
+# 
+# -> if connected client is registered then skip download and start monitoring
+# #
 
 class Client(threading.Thread):
     def __init__(self, socket, address, id, name, signal):
@@ -36,10 +42,15 @@ class Client(threading.Thread):
                 if command == "sync new" :
                     # msg = "we gonna sync your folder"
                     # self.socket.send(str.encode(msg))
-                    sync = Sync(self)
+                    sync = DownloadDir(self)
                     sync.ready()
                     print("[+]sync done")
                     # SyncAdd(self)
+
+                    ##
+                    # register for syncing & monitoring changed
+                    # --> then start monitoring
+                    # #
 
                 else: 
                     self.socket.send(str.encode("unknown command!"))
