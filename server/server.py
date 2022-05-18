@@ -1,6 +1,9 @@
-from download import DownloadDir
+import os
+from sync import Sync
 import socket
 import threading
+
+from monitor import Monitor
 
 #Variables for holding information about connections
 connections = []
@@ -21,44 +24,48 @@ class Client(threading.Thread):
         self.id = id
         self.name = name
         self.signal = signal
+        self.syncing_dir = os.path.join("data")
     
     def __str__(self):
         return str(self.id) + " " + str(self.address)
     
 
     def run(self):
-        while self.signal:
-            try:
-                print("[+]waiting for  new data")
-                data = self.socket.recv(32)
-            except:
-                print("Client " + str(self.address) + " has disconnected")
-                self.signal = False
-                connections.remove(self)
-                break
-            if data != "":
-                command = str(data.decode("utf-8"))
-                print(command)
-                if command == "sync new" :
-                    # msg = "we gonna sync your folder"
-                    # self.socket.send(str.encode(msg))
-                    sync = DownloadDir(self)
-                    sync.ready()
-                    print("[+]sync done")
-                    # SyncAdd(self)
+        # while self.signal:
+        try:
+            print("[+]waiting for  new data")
+            data = self.socket.recv(32)
+        except:
+            print("Client " + str(self.address) + " has disconnected")
+            self.signal = False
+            connections.remove(self)
+            # break
+        if data != "":
+            command = str(data.decode("utf-8"))
+            print(command)
+            if command == "sync new" :
+                # msg = "we gonna sync your folder"
+                # self.socket.send(str.encode(msg))
+                sync = Sync(self)
+                sync.ready()
+                print("[+]sync done")
+                # SyncAdd(self)
 
-                    ##
-                    # register for syncing & monitoring changed
-                    # --> then start monitoring
-                    # #
+                ##
+                # register for syncing & monitoring changed
+                # --> then start monitoring
+                # #
+                mon = Monitor(self.socket, self.syncing_dir, self)
+                mon.run()
 
-                else: 
-                    self.socket.send(str.encode("unknown command!"))
-                # print("ID " + str(self.id) + ": " + str(data.decode("utf-8")))
-                # for sending data to all clients
-                # for client in connections:
-                #     if client.id != self.id:
-                #         client.socket.sendall(data)
+
+            else: 
+                self.socket.send(str.encode("unknown command!"))
+            # print("ID " + str(self.id) + ": " + str(data.decode("utf-8")))
+            # for sending data to all clients
+            # for client in connections:
+            #     if client.id != self.id:
+            #         client.socket.sendall(data)
 
 #
 # Waiting for new connections

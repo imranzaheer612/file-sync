@@ -1,8 +1,9 @@
+import os
 import socket
 import threading
 import sys
 from monitor import Watcher
-from upload import UploadDir
+from sync import Sync
 
 
 
@@ -21,28 +22,29 @@ class Client():
         self.host = host
         self.port = port
         self.REGISTERED = False
-        self.syncing_dir = './data/myData'
+        self.syncing_dir = os.path.join("data", "myData")
+        self.signal = True
 
     #
     # Parallely receiveing server commands
     # #
-    def receive(self, socket, signal):
-        while signal:
+    def receive(self):
+        while self.signal:
             # try:
-                data = socket.recv(32)
+                data = self.socket.recv(32)
                 data_str = str(data.decode("utf-8"))
                 print(data_str)
 
                 if (data_str == 'server ready'):
                     
                     # upload dir for the first time
-                    sync = UploadDir(socket, self.syncing_dir)
-                    sync.start();
+                    sync = Sync(self.socket)
+                    sync.sendDir(self.syncing_dir);
                     print("sync done")
                     
                     # then sync changes
                     self.REGISTERED = True
-                    w = Watcher()
+                    w = Watcher(self.socket, self.syncing_dir)
                     w.run()
 
             # except Exception as e:
@@ -62,7 +64,7 @@ class Client():
             input("Press enter to quit")
             sys.exit(0)
 
-        receiveThread = threading.Thread(target = self.receive, args = (self.socket, True))
+        receiveThread = threading.Thread(target = self.receive)
         receiveThread.start()
 
     #
