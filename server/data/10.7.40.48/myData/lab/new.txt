@@ -1,0 +1,2 @@
+done-transfer
+rmData data\my

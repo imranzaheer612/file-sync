@@ -1,0 +1,16 @@
+{
+    "clients": [
+        {
+            "id": "127.0.0.1",
+            "watcher": false
+        },
+        {
+            "id": "10.7.41.237",
+            "watcher": false
+        },
+        {
+            "id": "10.7.40.48",
+            "watcher": false
+        }
+    ]
+}

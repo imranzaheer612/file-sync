@@ -7,4 +7,5 @@ client = Client()
 client.connect()
 
 # start a parallel process for sending commands
-client.send()
+# client.send()
+
