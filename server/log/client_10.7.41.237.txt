@@ -1,0 +1,8 @@
+[2022-05-22 13:30:29,212] : [+]client exits
+[2022-05-22 13:30:30,215] : Sending {myData\lab\lab.txt}
+[2022-05-22 13:30:30,217] : Sending {myData\pics\gow.png}
+[2022-05-22 13:30:30,223] : Sending {myData\pics\sample.png}
+[2022-05-22 13:30:30,227] : Sending {myData\text\file.txt}
+[2022-05-22 13:30:30,229] : Sending {myData\text\new.txt}
+[2022-05-22 13:30:30,231] : Sending {myData\text\saitama.txt}
+[2022-05-22 13:30:30,234] : Done.

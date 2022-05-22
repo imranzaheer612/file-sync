@@ -2,6 +2,7 @@ import os
 import socket
 import threading
 import sys
+from logClient import LogClient
 from updateClient.syncClient import SyncClient
 from updateServer.monitorClient import Watcher
 from updateClient.monitorServer import MonitorServer
@@ -9,70 +10,71 @@ from updateServer.syncServer import Sync
 
 
 
-class Client(): 
+class Client():
+    """
+    Client will handle function like connecting to the server
+    & monitoring file changes in parallel
+    """
 
-    ##
-    # REGISTERED --> can be in a json file
-    # 
-    # --> every time client reopen check if it is a registered client
-    # --> if registered then skip the upload dir step and start monitoring
-    # host and port can also be
-    # #
+    
 
     def __init__(self, host="10.7.41.237", port=int("55000")):
+        """
+        Initializing socket
+        :param self:
+        :param host: host address (serve address)
+        :param port: host port number
+        :return:
+        """
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        # self.socket.recv(32).dec
         self.host = host
         self.port = port
-        self.REGISTERED = False
         self.syncing_dir = os.path.join("data", "myData")
         self.signal = True
 
-    #
-    # Parallely receiving server commands
-    # #
-    def receive(self):
-        # while self.signal:
-            # try:
-                data = self.socket.recv(32)
-                # client_file = self.socket.makefile('rb')
-                data_str = str(data.decode("utf-8"))
-                # data_str = client_file.readline()
-                # print(data_str)
+   
+    def startClient(self):
+        """
+        Start client and look for server commands
+        if ("true") --> client already synced --> get files
+        else --> client gonna sync for the firs time --> send files
 
-                if (data_str == 'true'):
-                    # upload dir for the first time
-                    sync = Sync(self.socket)
-                    sync.sendDir(self.syncing_dir);
-                    print("sync done")
+        :param self:
+        """
 
-                else:
-                    sync = SyncClient(self)
-                    sync.receiveDir()
-                # then sync changes
-                self.REGISTERED = True
+        client_log = LogClient()
+        logger = client_log.getLogger()
+        log = ""
 
-                sync  = MonitorServer(self.socket, self.syncing_dir, self)
-                # sync.run()
-                
-                receiveThread = threading.Thread(target = sync.run)
-                receiveThread.start()
+        try: 
+            data = self.socket.recv(32)
+            data_str = str(data.decode("utf-8"))
+            
+            if (data_str == 'true'):
+                sync = Sync(self.socket, logger)
+                sync.sendDir(self.syncing_dir);
+                logger.debug("sync done")
 
-                w = Watcher(self.socket, self.syncing_dir)
-                w.run()
-
-                    # run monitor server
-
-            # except Exception as e:
-            #     print("You have been disconnected from the server: ", e)
-            #     signal = False
-            #     break
+            else:
+                sync = SyncClient(self, logger)
+                sync.receiveDir()
 
 
-    #
-    # Connection to server
-    # #
+            sync  = MonitorServer(self.socket, self.syncing_dir, self, logger)        
+            receiveThread = threading.Thread(target = sync.run)
+            receiveThread.start()
+
+            w = Watcher(self.socket, self.syncing_dir, logger)
+            w.run()
+
+        except Exception as e:
+            print("You have been disconnected from the server: ", e)
+            logger.warn("You have been disconnected from the server: " + e)
+
     def connect(self):
+        """
+        Try connecting to the serve and start client thread
+        """
         try:
             self.socket.connect((self.host, self.port))
         except Exception as e:
@@ -80,18 +82,23 @@ class Client():
             input("Press enter to quit")
             sys.exit(0)
 
-        receiveThread = threading.Thread(target = self.receive)
+        receiveThread = threading.Thread(target = self.startClient)
         receiveThread.start()
 
-    #
-    # Parallely sending commands to server
-    # #
+    
     def send(self):
+        """
+        Used if you wanna start client receiving commands thread 
+        """
         while True:
             message = input("Enter command:")
             self.socket.send(str.encode(message))
 
+
     def scanStruct(self):
+        """
+        Scan the dir structure. You can use it compare tree with serve
+        """
         log = ''
         path = os.path.join('data')
         for root, dirs, files in os.walk(path):

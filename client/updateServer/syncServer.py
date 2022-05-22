@@ -1,34 +1,56 @@
 
+from dataclasses import replace
 import os
 
 CHUNK_SIZE = 1_000_000
 
 
 class Sync():
+    """
+    Class use the keep server synced by sending files
+    """
     
-    def __init__(self, socket):
+    def __init__(self, socket, logger):
+        """
+        Init socket
+        :param socket: socket
+        """
+        
         self.socket = socket
+        self.logger = logger
+
 
     def sendDir(self, syncing_dir):
-        sock = self.socket
+        """
+        Send dir to server scan files and send one by one
+        :param syncing_dir: Dir you wanna send
+        """
 
+        sock = self.socket
         for path,dirs,files in os.walk(syncing_dir):
             for file in files:
                 filename = os.path.join(path,file)
                 self.sendFile(filename)
         
         sock.send(str.encode('done-transfer') + b'\n')
-        print('Done.')
+        # print('Done.')
         return
     
-    def getDirStruct(self):
-        self.socket.recv(1024)
 
     def sendFile(self, filename):
+        """
+        Sending file to server
+        :send file_name first
+        :then file_size
+        :then file_data
+
+        :param filename: file_path you wanna send
+        """
+        
         relpath = os.path.relpath(filename,'./data')
         filesize = os.path.os.stat(filename)
 
-        print(f'Sending {relpath}')
+        self.logger.debug('Sending {' + relpath + '}')
 
         with open(filename,'rb') as f:
             self.socket.send(relpath.encode() + b'\n')
@@ -44,5 +66,5 @@ class Sync():
     def syncFile(self, file_name):
         self.sendFile(file_name)
         self.socket.send(str.encode('done-transfer') + b'\n')
-        print('Done.')
+        self.logger.debug('Done.')
         return

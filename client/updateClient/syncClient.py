@@ -5,8 +5,9 @@ CHUNK_SIZE = 1_000_000
 
 class SyncClient():
     
-    def __init__(self, client):
+    def __init__(self, client, logger):
         self.client = client
+        self.logger = logger
     
     def ready(self):
         self.client.socket.send(str.encode("client ready"))
@@ -33,11 +34,12 @@ class SyncClient():
             if filename == "done-transfer":
                 break
 
-            print("filename: ", filename)
+            # print("filename: ", filename)
             
             # Now read file size.
             length = int(client_file.readline())
-            print(f'Downloading {filename}...\n  Expecting {length:,} bytes...',end='',flush=True)
+            msg = f'Downloading {filename}...\n  Expecting {length:,} bytes...'
+            self.logger.debug(msg)
 
             # Make dir according to filepaths.
             path = os.path.join('./data', filename)
@@ -52,51 +54,47 @@ class SyncClient():
                     f.write(data)
                     length -= len(data)
                 else:
-                    print('Complete')
+                    self.logger.debug('Complete')
                     continue
 
             # socket was closed early.
-            print('Incomplete')
+            self.logger.warn('Incomplete')
             break
 
         return
 
 
     def rmFile(self, path):
-        # self.moveFile(path, os.path.join("data","tempDel"))
-        # def rmFile(self, path):
+
         path = path.replace('\\', '/')
         path = path.strip('\n')
-        # self.moveFile(path, os.path.join("data","tempDel"))
+       
         if (os.path.isfile(path)):
             os.remove(path)
         else :
             try:
                 shutil.rmtree(path)
             except Exception as e:
-                print("handel delete: ", e)
+                self.logger.error("[-]handled delete: " +  str(e))
 
 
 
     def moveFile(self, src, dest):
-        # print("given : ", src)
         src = src.replace('\\', '/')
         src = src.strip('\n')
-        # print("setted: ", src)
         
         if (os.path.isfile(src)):
             try: 
-                print("file -- make dir for ", dest)
+                # print("file -- make dir for ", dest)
                 os.makedirs(os.path.dirname(dest), exist_ok=True)
                 shutil.move(src, dest)
             except Exception as e:
-                print("handled move rename: " , e)
+                self.logger.warn("[-]Handled move: " + e)
         
         else :
-             # pass
             try:
                 print("dir -- make dir for ", dest)
                 os.makedirs(os.path.dirname(dest), exist_ok=True)
                 os.removedirs(src)
             except Exception as e:
-                print("handled move rename: ", e)
+                self.logger.warn("[-]handled move: " + e)
